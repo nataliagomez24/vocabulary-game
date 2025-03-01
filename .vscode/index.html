@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(to bottom right, #c3aed6, #a48ddc);
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            background-color: #ffffffd1;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            max-width: 450px;
+        }
+        h1 {
+            color: #5F259F;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #555;
+            margin-bottom: 20px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #5F259F;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #a48ddc;
+        }
+        .hidden {
+            display: none;
+        }
+        .correct {
+            background-color: #4caf50;
+            color: white;
+        }
+        .incorrect {
+            background-color: #f44336;
+            color: white;
+        }
+        .move {
+            animation: move 1s ease;
+        }
+        @keyframes move {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+        #coins {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .image-container img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vocabulary Game</h1>
+        <div id="main-menu">
+            <h2>Choose a category</h2>
+            <button onclick="startGame('Jobs')">Jobs</button>
+            <button onclick="startGame('Places')">Places</button>
+            <button onclick="startGame('Adjectives')">Adjectives</button>
+            <button onclick="startGame('Body Parts')">Body Parts</button>
+            <button onclick="startGame('Sports')">Sports</button>
+            <button onclick="startGame('Verbs')">Verbs</button>
+        </div>
+        <div id="game" class="hidden">
+            <div class="image-container hidden">
+                <img id="question-image" src="" alt="Question Image" onerror="hideImageContainer()">
+            </div>
+            <div id="options"></div>
+            <p id="coins">Coins: 0</p>
+        </div>
+        <div id="result" class="hidden">
+            <p id="score"></p>
+            <p id="message"></p>
+            <button onclick="resetGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const categories = {
+            Jobs: { "doctor.jpg": "Doctor", "nurse.jpg": "Nurse", "teacher.jpg": "Teacher", "fireman.jpg": "Fireman" },
+            Places: { "bank.jpg": "Bank", "school.jpg": "School", "park.jpg": "Park", "library.jpg": "Library" },
+            Adjectives: { "beautiful.jpg": "Beautiful", "happy.jpg": "Happy", "sad.jpg": "Sad", "ugly.jpg": "Ugly" },
+            'Body Parts': { "hand.jpg": "Hand", "eye.jpg": "Eye", "foot.jpg": "Foot", "nose.jpg": "Nose" },
+            Sports: { "soccer.jpg": "Soccer", "tennis.jpg": "Tennis", "baseball.jpg": "Baseball", "hockey.jpg": "Hockey" },
+            Verbs: { "run.jpg": "Run", "sleep.jpg": "Sleep", "walk.jpg": "Walk", "read.jpg": "Read" }
+        };
+
+        let currentCategory, currentIndex, score, coins;
+        const mainMenu = document.getElementById('main-menu');
+        const game = document.getElementById('game');
+        const result = document.getElementById('result');
+        const questionImage = document.getElementById('question-image');
+        const imageContainer = document.querySelector('.image-container');
+        const options = document.getElementById('options');
+        const coinsDisplay = document.getElementById('coins');
+        const scoreDisplay = document.getElementById('score');
+        const messageDisplay = document.getElementById('message');
+
+        function startGame(category) {
+            currentCategory = category;
+            currentIndex = 0;
+            score = 0;
+            coins = 0;
+            mainMenu.classList.add('hidden');
+            game.classList.remove('hidden');
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentIndex >= 5) {
+                endGame();
+                return;
+            }
+            const words = Object.values(categories[currentCategory]);
+            const images = Object.keys(categories[currentCategory]);
+            const correctAnswer = words[currentIndex];
+            questionImage.src = `images/${images[currentIndex]}`;
+            questionImage.onload = () => {
+                imageContainer.classList.remove('hidden');
+            };
+            options.innerHTML = '';
+            const optionsArray = generateOptions(words, correctAnswer);
+            optionsArray.forEach(word => {
+                const button = document.createElement('button');
+                button.textContent = word;
+                button.onclick = () => checkAnswer(word, button);
+                options.appendChild(button);
+            });
+            currentIndex++;
+        }
+
+        function generateOptions(words, correctAnswer) {
+            const options = [correctAnswer];
+            while (options.length < 4) {
+                const randomWord = words[Math.floor(Math.random() * words.length)];
+                if (!options.includes(randomWord)) {
+                    options.push(randomWord);
+                }
+            }
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        function checkAnswer(answer, button) {
+            const correctAnswer = Object.values(categories[currentCategory])[currentIndex - 1];
+            const buttons = options.getElementsByTagName('button');
+            for (const btn of buttons) {
+                btn.disabled = true;
+                if (btn.textContent === correctAnswer) {
+                    btn.classList.add('correct');
+                    coins += 10;
+                } else if (btn.textContent === answer) {
+                    btn.classList.add('incorrect');
+                }
+            }
+            coinsDisplay.textContent = `Coins: ${coins}`;
+            if (button) {
+                button.classList.add('move');
+            }
+            if (answer === correctAnswer) {
+                score++;
+            }
+            setTimeout(nextQuestion, 1000);
+        }
+
+        function endGame() {
+            game.classList.add('hidden');
+            result.classList.remove('hidden');
+            scoreDisplay.textContent = `You got ${score} out of 5 correct!`;
+            if (score === 5) {
+                messageDisplay.textContent = 'Excellent job!';
+            } else if (score >= 3) {
+                messageDisplay.textContent = 'Good effort!';
+            } else {
+                messageDisplay.textContent = 'Better luck next time!';
+            }
+        }
+
+        function resetGame() {
+            result.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+        }
+
+        function hideImageContainer() {
+            imageContainer.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
